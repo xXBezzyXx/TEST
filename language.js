@@ -176,6 +176,181 @@
 
   const reverseDictionary = Object.fromEntries(Object.entries(dictionary).map(([en, es]) => [es, en]));
 
+
+  const phraseDictionary = {
+    "Hangers & Supports": "Soportes y Colgadores",
+    "Hanging Strap": "Cinta Colgante",
+    "Duct Hanging Strap": "Cinta Colgante para Ducto",
+    "Hangers": "Colgadores",
+    "Supports": "Soportes",
+    "Hardware": "Tornillería",
+    "Parks": "Parques",
+    "Park": "Parque",
+    "Sportsplex": "Complejo Deportivo",
+    "Sportplex": "Complejo Deportivo",
+    "Community": "Comunidad",
+    "Center": "Centro",
+    "Central": "Central",
+    "Elementary School": "Escuela Primaria",
+    "School": "Escuela",
+    "Street": "Calle",
+    "Bay Street": "Calle Bay",
+    "Spring": "Spring",
+    "North East": "Noreste",
+    "North": "Norte",
+    "South": "Sur",
+    "East": "Este",
+    "West": "Oeste",
+    "Building": "Edificio",
+    "Buildings": "Edificios",
+    "County": "Condado",
+    "Permit Center": "Centro de Permisos",
+    "Field": "Campo",
+    "Fields": "Campos",
+    "Gym": "Gimnasio",
+    "Gymnasium": "Gimnasio",
+    "Classroom": "Aula",
+    "Classrooms": "Aulas",
+    "Office": "Oficina",
+    "Offices": "Oficinas",
+    "Library": "Biblioteca",
+    "Kitchen": "Cocina",
+    "Cafeteria": "Cafetería",
+    "Mechanical": "Mecánico",
+    "Electrical": "Eléctrico",
+    "Plumbing": "Plomería",
+    "Renovation": "Renovación",
+    "Addition": "Adición",
+    "Phase": "Fase",
+
+    "Duct": "Ducto",
+    "Pipe": "Tubería",
+    "Piping": "Tubería",
+    "Fittings": "Accesorios",
+    "Fitting": "Accesorio",
+    "Copper": "Cobre",
+    "PVC": "PVC",
+    "Insulation": "Aislamiento",
+    "Glue": "Pegamento",
+    "Primer": "Primer",
+    "Clamp": "Abrazadera",
+    "Clamps": "Abrazaderas",
+    "Strap": "Cinta",
+    "Straps": "Cintas",
+    "Hanger": "Colgador",
+    "Support": "Soporte",
+    "Material": "Material",
+    "Materials": "Materiales",
+    "Tool": "Herramienta",
+    "Tools": "Herramientas",
+    "Consumables": "Consumibles",
+    "Fasteners": "Tornillería",
+    "Fastener": "Tornillo",
+    "Screw": "Tornillo",
+    "Screws": "Tornillos",
+    "Self Tapping": "Autorroscantes",
+    "Self-Drilling": "Autoperforante",
+    "Washer": "Arandela",
+    "Washers": "Arandelas",
+    "Nut": "Tuerca",
+    "Nuts": "Tuercas",
+    "Bolt": "Perno",
+    "Bolts": "Pernos",
+    "Anchor": "Anclaje",
+    "Anchors": "Anclajes",
+    "Beam": "Viga",
+    "Cleat": "Cleat",
+    "Seal": "Sellador",
+    "Tape": "Cinta",
+    "Foil": "Foil",
+    "Flex": "Flexible",
+    "Wrap": "Aislamiento",
+    "Blue": "Azul",
+    "Gloves": "Guantes",
+    "Safety": "Seguridad",
+    "Glasses": "Lentes",
+    "Blade": "Hoja",
+    "Blades": "Hojas",
+    "Drill": "Taladro",
+    "Bits": "Brocas",
+    "Bit": "Broca",
+    "Hole Saw": "Sierra Copa",
+    "Hole Saws": "Sierras Copa",
+    "Pins": "Pines",
+    "Pin": "Pin",
+    "Shots": "Cargas",
+    "Shot": "Carga",
+    "Metal": "Metal",
+    "Demo": "Demolición",
+    "Fine Tooth": "Diente Fino",
+
+    "Select": "Seleccionar",
+    "Search": "Buscar",
+    "Order": "Orden",
+    "Orders": "Órdenes",
+    "Rental": "Renta",
+    "Rentals": "Rentas",
+    "Report": "Reporte",
+    "Daily": "Diario",
+    "Project": "Proyecto",
+    "Tracker": "Seguimiento",
+    "Add": "Agregar",
+    "Save": "Guardar",
+    "Cancel": "Cancelar",
+    "Submit": "Enviar",
+    "Review": "Revisar",
+    "Cart": "Carrito",
+    "Quantity": "Cantidad",
+    "Qty": "Cant.",
+    "Size": "Tamaño",
+    "Unit": "Unidad",
+    "Notes": "Notas",
+    "Note": "Nota",
+    "Required": "Requerido",
+    "Active": "Activo"
+  };
+
+  const reversePhraseDictionary = Object.fromEntries(Object.entries(phraseDictionary).map(([en, es]) => [es, en]));
+
+  function escapeRegExp(text) {
+    return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function smartTranslate(value, lang) {
+    if (!value) return value;
+    const original = String(value);
+    const trimmed = original.trim();
+    const leading = original.match(/^\s*/)[0];
+    const trailing = original.match(/\s*$/)[0];
+    const exactMap = lang === "es" ? dictionary : reverseDictionary;
+    if (Object.prototype.hasOwnProperty.call(exactMap, trimmed)) return leading + exactMap[trimmed] + trailing;
+
+    const phraseMap = lang === "es" ? phraseDictionary : reversePhraseDictionary;
+    let translated = trimmed;
+    Object.entries(phraseMap)
+      .sort((a, b) => b[0].length - a[0].length)
+      .forEach(([from, to]) => {
+        const re = new RegExp("\\b" + escapeRegExp(from) + "\\b", "gi");
+        translated = translated.replace(re, to);
+      });
+
+    if (lang === "es") {
+      translated = translated
+        .replace(/\s*&\s*/g, " y ")
+        .replace(/\s+and\s+/gi, " y ")
+        .replace(/\s+of\s+/gi, " de ")
+        .replace(/\s+for\s+/gi, " para ")
+        .replace(/\s+to\s+/gi, " a ");
+    } else {
+      translated = translated
+        .replace(/\s+y\s+/gi, " & ")
+        .replace(/\s+de\s+/gi, " of ")
+        .replace(/\s+para\s+/gi, " for ");
+    }
+
+    return leading + translated + trailing;
+  }
+
   function getLanguage() {
     return localStorage.getItem(STORAGE_KEY) || "en";
   }
@@ -185,12 +360,7 @@
   }
 
   function translateString(value, lang) {
-    if (!value) return value;
-    const trimmed = String(value).trim();
-    const leading = String(value).match(/^\s*/)[0];
-    const trailing = String(value).match(/\s*$/)[0];
-    const map = lang === "es" ? dictionary : reverseDictionary;
-    return Object.prototype.hasOwnProperty.call(map, trimmed) ? leading + map[trimmed] + trailing : value;
+    return smartTranslate(value, lang);
   }
 
   function translateTextNodes(root, lang) {
