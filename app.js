@@ -22,7 +22,7 @@ function getAppSettings() {
     companyTitle: "AC General",
     mainPageTitle: "Jobs",
     webpageTitle: "Material Orders",
-    googleAppsScriptUrl: "https://script.google.com/macros/s/AKfycbwUTdmg06ygEMLTSQ6qRd1uaheqvNQbOh3d45UZX_clnWP2OHmUKwM5UiWVIdmX8kCj/exec",
+    googleAppsScriptUrl: "https://script.google.com/macros/s/AKfycbz_WsQB2oEqVlUn4JFdBoEgQMl4CCE_Nn86n_Quw05VqVK131y-5_SqlV_9n9aYHDtLSw/exec",
     senderEmail: "",
     dailyReportCcEmail: "",
     pdfLetterhead: DEFAULT_PDF_LETTERHEAD
@@ -2252,6 +2252,94 @@ async function submitRental() {
   if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
 }
 
+function startFieldActivity() {
+  const job = document.getElementById("fieldActivityJobName");
+  if (job) job.textContent = currentSelectedJob || "Selected Job";
+  showScreen("fieldActivityScreen");
+}
+
+function startMaterialReceived() {
+  const jobEl = document.getElementById("materialReceivedJob");
+  const byEl = document.getElementById("materialReceivedBy");
+  const dateEl = document.getElementById("materialReceivedDateTime");
+  const photoInput = document.getElementById("materialReceivedPhoto");
+  const photoList = document.getElementById("materialReceivedPhotoList");
+  const notes = document.getElementById("materialReceivedNotes");
+
+  if (jobEl) jobEl.textContent = currentSelectedJob || "Selected Job";
+  if (byEl) byEl.textContent = getLoggedInRequesterName() || "Logged-in user";
+  if (dateEl) dateEl.textContent = new Date().toLocaleString();
+  if (photoInput) photoInput.value = "";
+  if (photoList) photoList.textContent = "No photo selected.";
+  if (notes) notes.value = "";
+
+  showScreen("materialReceivedScreen");
+}
+
+function makeMaterialReceivedNumber() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const short = String(Date.now()).slice(-5);
+  return `MR-${y}${m}${d}-${short}`;
+}
+
+async function getMaterialReceivedPhotos() {
+  const input = document.getElementById("materialReceivedPhoto");
+  const files = input && input.files ? Array.from(input.files).slice(0, 1) : [];
+  const photos = [];
+  for (const file of files) {
+    if (!file.type || !file.type.startsWith("image/")) continue;
+    const dataUrl = await fileToCompressedDataUrl(file, 1200, 0.72);
+    if (dataUrl) photos.push({ name: file.name || "material-received.jpg", dataUrl });
+  }
+  return photos;
+}
+
+function updateMaterialReceivedPhotoList() {
+  const input = document.getElementById("materialReceivedPhoto");
+  const list = document.getElementById("materialReceivedPhotoList");
+  if (!input || !list) return;
+  const files = Array.from(input.files || []).filter(file => file.type && file.type.startsWith("image/"));
+  list.textContent = files.length ? "1 photo selected" : "No photo selected.";
+}
+
+async function submitMaterialReceived() {
+  const job = currentSelectedJob || (document.getElementById("selectedJob") ? document.getElementById("selectedJob").value : "");
+  const receivedBy = getLoggedInRequesterName();
+  const notes = ((document.getElementById("materialReceivedNotes") || {}).value || "").trim();
+
+  if (!receivedBy) { alert("Please log in before submitting material received."); return; }
+  if (!job) { alert("Please select a job first."); return; }
+
+  const btn = document.getElementById("submitMaterialReceivedBtn");
+  const originalText = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = "Sending Material Received..."; }
+
+  const photos = await getMaterialReceivedPhotos();
+  const receivedNumber = makeMaterialReceivedNumber();
+  const createdAt = new Date().toISOString();
+  const payload = {
+    action: "materialReceived",
+    receivedNumber,
+    job,
+    receivedBy,
+    notes,
+    photoCount: photos.length,
+    photos,
+    status: "Received",
+    createdAt,
+    toEmail: getJobEmail(job)
+  };
+
+  await saveOrderToGoogleSheet(payload);
+  alert("Material Received submitted. It was saved and emailed through Google Apps Script.");
+  showScreen("jobsScreen");
+
+  if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+}
+
 function startDailyReport() {
   const selectedJob = document.getElementById("dailyReportJob");
   const submittedBy = document.getElementById("dailyReportSubmittedBy");
@@ -2752,6 +2840,18 @@ function setupApp() {
   const rentalChoiceBtn = document.getElementById("rentalChoiceBtn");
   if (rentalChoiceBtn) rentalChoiceBtn.addEventListener("click", startRental);
 
+  const fieldActivityChoiceBtn = document.getElementById("fieldActivityChoiceBtn");
+  if (fieldActivityChoiceBtn) fieldActivityChoiceBtn.addEventListener("click", startFieldActivity);
+
+  const materialReceivedChoiceBtn = document.getElementById("materialReceivedChoiceBtn");
+  if (materialReceivedChoiceBtn) materialReceivedChoiceBtn.addEventListener("click", startMaterialReceived);
+
+  const materialReceivedPhotoInput = document.getElementById("materialReceivedPhoto");
+  if (materialReceivedPhotoInput) materialReceivedPhotoInput.addEventListener("change", updateMaterialReceivedPhotoList);
+
+  const submitMaterialReceivedBtn = document.getElementById("submitMaterialReceivedBtn");
+  if (submitMaterialReceivedBtn) submitMaterialReceivedBtn.addEventListener("click", submitMaterialReceived);
+
   const projectTrackerChoiceBtn = document.getElementById("projectTrackerChoiceBtn");
   if (projectTrackerChoiceBtn) projectTrackerChoiceBtn.addEventListener("click", startProjectTracker);
   updateProjectTrackerAccess();
@@ -3073,11 +3173,11 @@ document.addEventListener("touchend", event => {
 }, { passive: true });
 
 /* V70 Google Sheets jobs source - shared jobs without app-data export */
-const DEFAULT_GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUTdmg06ygEMLTSQ6qRd1uaheqvNQbOh3d45UZX_clnWP2OHmUKwM5UiWVIdmX8kCj/exec";
+const DEFAULT_GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_WsQB2oEqVlUn4JFdBoEgQMl4CCE_Nn86n_Quw05VqVK131y-5_SqlV_9n9aYHDtLSw/exec";
 let sharedJobsLoadedOnce = false;
 
 function getGoogleAppsScriptUrl() {
-  return "https://script.google.com/macros/s/AKfycbwUTdmg06ygEMLTSQ6qRd1uaheqvNQbOh3d45UZX_clnWP2OHmUKwM5UiWVIdmX8kCj/exec";
+  return "https://script.google.com/macros/s/AKfycbz_WsQB2oEqVlUn4JFdBoEgQMl4CCE_Nn86n_Quw05VqVK131y-5_SqlV_9n9aYHDtLSw/exec";
 }
 
 function getStoredJobs() {
