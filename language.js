@@ -1,6 +1,6 @@
 (function () {
   const STORAGE_KEY = "fieldOpsLanguage";
-  const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "TEXTAREA", "INPUT", "SELECT", "OPTION"]);
+  const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "TEXTAREA", "INPUT", "SELECT"]);
 
   const dictionary = {
     "Material Ordering": "Pedido de Materiales",
@@ -111,7 +111,67 @@
     "Manpower": "Mano de Obra",
     "Operations": "Operaciones",
     "Admin": "Administrador",
-    "Material order ready": "Orden de material lista"
+    "Material order ready": "Orden de material lista",
+
+    "● Active": "● Activo",
+
+    "DCPS Spring Park": "DCPS Parque Spring",
+    "UF Jax Bay Street": "UF Jax Calle Bay",
+    "FSDB": "FSDB",
+    "NE Park": "Parque NE",
+    "SMA": "SMA",
+    "RR": "RR",
+    "Other Job": "Otro Trabajo",
+
+    "Nuts": "Tuercas",
+    "Bolts": "Pernos",
+    "Washers": "Arandelas",
+    "All Thread": "Varilla Roscada",
+    "Unistrut": "Unistrut",
+    "Beam Clamps": "Abrazaderas de Viga",
+    "Self Tapping Screws": "Tornillos Autorroscantes",
+    "Tapcons": "Tapcons",
+    "Anchors": "Anclajes",
+    "Fender Washers": "Arandelas Grandes",
+    "Duct Seal": "Sellador de Ducto",
+    "Foil Tape": "Cinta de Foil",
+    "Flex Duct": "Ducto Flexible",
+    "Duct Wrap": "Aislamiento de Ducto",
+    "Drive Cleat": "Drive Cleat",
+    "S-Lock": "S-Lock",
+    "Pittsburgh": "Pittsburgh",
+    "Hanger Strap": "Cinta Colgante",
+    "Copper Pipe": "Tubo de Cobre",
+    "PVC Pipe": "Tubo PVC",
+    "Pipe Insulation": "Aislamiento de Tubería",
+    "PVC Glue": "Pegamento PVC",
+    "Primer": "Primer",
+    "Pipe Clamps": "Abrazaderas de Tubería",
+    "Pins": "Pines",
+    "Shots": "Cargas",
+    "Sawzall Blades": "Hojas de Sawzall",
+    "Drill Bits": "Brocas",
+    "Hole Saws": "Sierras Copa",
+    "Blue Wrap": "Plástico Azul",
+    "Gloves": "Guantes",
+    "Safety Glasses": "Lentes de Seguridad",
+
+    "Box": "Caja",
+    "Each": "Cada Uno",
+    "Bundle": "Paquete",
+    "Stick": "Tramo",
+    "Bucket": "Cubeta",
+    "Pallet": "Pallet",
+    "Roll": "Rollo",
+    "Can": "Lata",
+    "Pair": "Par",
+    "Pack": "Paquete",
+    "Metal": "Metal",
+    "Demo": "Demolición",
+    "Fine Tooth": "Diente Fino",
+    "Green": "Verde",
+    "Yellow": "Amarillo",
+    "Red": "Rojo"
   };
 
   const reverseDictionary = Object.fromEntries(Object.entries(dictionary).map(([en, es]) => [es, en]));
