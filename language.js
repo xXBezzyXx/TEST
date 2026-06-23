@@ -360,47 +360,7 @@
   }
 
   function translateString(value, lang) {
-    return smartTranslate(value, lang);
-  }
-
-
-  function getActiveRoot() {
-    return document.querySelector(".screen.active") || document.querySelector(".app") || document.body;
-  }
-
-  function shouldSkipNode(node) {
-    const parent = node.parentElement;
-    if (!parent) return true;
-    if (SKIP_TAGS.has(parent.tagName)) return true;
-    if (parent.id === "fieldOpsLanguageToggle") return true;
-    if (parent.closest && parent.closest("#fieldOpsLanguageToggle")) return true;
-    return false;
-  }
-
-  function translateTextNodes(root, lang) {
-    if (!root) return;
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        if (shouldSkipNode(node)) return NodeFilter.FILTER_REJECT;
-        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
-        return NodeFilter.FILTER_ACCEPT;
-      }
-    });
-
-    const nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
-    nodes.forEach(node => {
-      const next = translateString(node.nodeValue, lang);
-      if (next !== node.nodeValue) node.nodeValue = next;
-    });
-  }
-
-  function translateAttributes(root, lang) {
-    if (!root) return;
-    root.querySelectorAll("input[placeholder], textarea[placeholder]").forEach(el => {
-      const next = translateString(el.placeholder, lang);
-      if (next !== el.placeholder) el.placeholder = next;
-    });
+    return smartTranslate(value, lang || getLanguage());
   }
 
   function ensureLanguageButton() {
@@ -421,68 +381,64 @@
     btn.setAttribute("aria-label", lang === "es" ? "Switch to English" : "Cambiar a Español");
   }
 
-  let applyTimer = null;
-  function applyLanguage(root) {
+  function translateNodeText(selector, text) {
+    document.querySelectorAll(selector).forEach(el => {
+      el.textContent = translateString(text);
+    });
+  }
+
+  function applyStaticLanguage() {
     const lang = getLanguage();
-    const target = root || getActiveRoot();
-    translateTextNodes(target, lang);
-    translateAttributes(target, lang);
-    updateLanguageButton(lang);
     document.documentElement.lang = lang;
+    updateLanguageButton(lang);
+
+    // Keep this list small and direct. Do not scan the entire app on every material/job render.
+    translateNodeText(".small-text", "Material Ordering");
+
+    const jobSearch = document.getElementById("jobSearch");
+    if (jobSearch) jobSearch.placeholder = translateString("Search jobs");
+
+    const materialSearch = document.getElementById("materialSearch");
+    if (materialSearch) materialSearch.placeholder = translateString("Search material");
   }
 
-  function scheduleApply(root) {
-    clearTimeout(applyTimer);
-    applyTimer = setTimeout(() => applyLanguage(root), 0);
+  function refreshVisibleDynamicParts() {
+    // These functions now render translated text directly using translateFieldOpsValue.
+    // Only re-render the visible items after the user manually switches language.
+    if (typeof window.renderJobs === "function") window.renderJobs();
+    if (typeof window.renderCategories === "function") window.renderCategories();
+    if (typeof window.renderMaterials === "function") window.renderMaterials();
+    if (typeof window.renderCartPreview === "function") window.renderCartPreview();
+    if (typeof window.updateJobActionScreen === "function") window.updateJobActionScreen();
   }
 
-  function patchFunction(name) {
-    const original = window[name];
-    if (typeof original !== "function" || original.__fieldOpsLanguagePatched) return false;
+  function patchShowScreen() {
+    if (typeof window.showScreen !== "function" || window.showScreen.__fieldOpsLanguageFastPatched) return;
+    const original = window.showScreen;
     const wrapped = function () {
       const result = original.apply(this, arguments);
-      scheduleApply(getActiveRoot());
+      setTimeout(applyStaticLanguage, 0);
       return result;
     };
-    wrapped.__fieldOpsLanguagePatched = true;
-    window[name] = wrapped;
-    return true;
-  }
-
-  function patchRenderFunctions() {
-    [
-      "showScreen",
-      "renderJobs",
-      "renderJobSelect",
-      "renderCategories",
-      "renderQuickOrder",
-      "renderMaterials",
-      "renderCartPreview",
-      "updateJobActionScreen",
-      "renderDailyReportScreen",
-      "renderRentalScreen",
-      "renderProjectTrackerScreen"
-    ].forEach(patchFunction);
+    wrapped.__fieldOpsLanguageFastPatched = true;
+    window.showScreen = wrapped;
   }
 
   function initLanguageToggle() {
     const btn = ensureLanguageButton();
-    if (btn && !btn.dataset.ready) {
+    if (!btn.dataset.ready) {
       btn.dataset.ready = "true";
       btn.addEventListener("click", () => {
         const next = getLanguage() === "es" ? "en" : "es";
         setLanguage(next);
-        applyLanguage(getActiveRoot());
+        applyStaticLanguage();
+        refreshVisibleDynamicParts();
       });
     }
 
-    patchRenderFunctions();
-    applyLanguage(getActiveRoot());
-
-    // App functions are loaded before this file, but some are attached after startup.
-    // Retry a few times without using a heavy whole-page MutationObserver.
-    setTimeout(() => { patchRenderFunctions(); applyLanguage(getActiveRoot()); }, 100);
-    setTimeout(() => { patchRenderFunctions(); applyLanguage(getActiveRoot()); }, 500);
+    patchShowScreen();
+    applyStaticLanguage();
+    setTimeout(patchShowScreen, 100);
   }
 
   if (document.readyState === "loading") {
@@ -491,7 +447,7 @@
     initLanguageToggle();
   }
 
-  window.applyFieldOpsLanguage = applyLanguage;
+  window.applyFieldOpsLanguage = applyStaticLanguage;
   window.translateFieldOpsValue = function(value) {
     return translateString(value, getLanguage());
   };
